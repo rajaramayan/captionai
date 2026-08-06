@@ -16,7 +16,7 @@ st.set_page_config(
 st.markdown("""
     <style>
     .main {
-        background-color: #0e1117;
+        background-color: #f0f4f8;
     }
     .stButton>button {
         width: 100%;
@@ -26,12 +26,13 @@ st.markdown("""
     }
     .caption-box {
         padding: 20px;
-        background-color: #1e2127;
+        background-color: #ffffff;
         border-radius: 10px;
-        border-left: 5px solid #ff4b4b;
+        border-left: 5px solid #e05252;
         margin-top: 20px;
         font-size: 20px;
         font-style: italic;
+        color: #1a1a2e;
     }
     </style>
 """, unsafe_allow_html=True)
