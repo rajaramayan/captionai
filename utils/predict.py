@@ -5,6 +5,7 @@ from utils.cnn import build_cnn_extractor, extract_features
 from utils.tokenizer import load_tokenizer
 from utils.preprocess import pad_sequence
 import time
+import urllib.request
 
 # Global references to avoid reloading
 _cnn_model = None
@@ -15,6 +16,26 @@ MAX_LENGTH = 34  # Standard for Flickr8k
 # Always resolve models/ relative to the project root (parent of utils/)
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _MODELS_DIR = os.path.join(_PROJECT_ROOT, 'models')
+
+
+def _download_if_missing(filename, env_var):
+    """Download a model file from a URL if it doesn't exist locally.
+    
+    Set the following environment variables on your cloud platform:
+      MODEL_LSTM_URL   -> public URL to model_lstm.h5
+      TOKENIZER_URL    -> public URL to tokenizer.json
+    """
+    path = os.path.join(_MODELS_DIR, filename)
+    if not os.path.exists(path):
+        url = os.environ.get(env_var)
+        if url:
+            print(f"Downloading {filename} from {env_var}...")
+            os.makedirs(_MODELS_DIR, exist_ok=True)
+            urllib.request.urlretrieve(url, path)
+            print(f"{filename} downloaded successfully.")
+        else:
+            print(f"WARNING: {filename} not found locally and {env_var} env var not set.")
+    return path
 
 def load_models():
     global _cnn_model, _lstm_model, _tokenizer
@@ -28,18 +49,19 @@ def load_models():
         except Exception as e:
             print("Error loading CNN model:", e)
 
-    # Load Tokenizer
+    # Load Tokenizer (auto-download from TOKENIZER_URL env var if missing)
     if _tokenizer is None:
-        tokenizer_path = os.path.join(_MODELS_DIR, 'tokenizer.pkl')
+        tokenizer_path = _download_if_missing('tokenizer.json', 'TOKENIZER_URL')
+        tokenizer_path = tokenizer_path.replace('.json', '.pkl')  # load_tokenizer handles .pkl -> .json
         _tokenizer = load_tokenizer(tokenizer_path)
         if _tokenizer:
             print(f"Tokenizer loaded with {len(_tokenizer.word_index)} words.")
         else:
             print("Tokenizer not found.")
 
-    # Load LSTM
+    # Load LSTM (auto-download from MODEL_LSTM_URL env var if missing)
     if _lstm_model is None and _tokenizer is not None:
-        lstm_path = os.path.join(_MODELS_DIR, 'model_lstm.h5')
+        lstm_path = _download_if_missing('model_lstm.h5', 'MODEL_LSTM_URL')
         if os.path.exists(lstm_path):
             try:
                 print("Loading LSTM model...")
