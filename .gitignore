@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Model weights - included in repo (files are under GitHub's 100MB limit)
+# models/*.h5
+# models/*.pkl
+# models/*.json
+
+# Uploaded images (user data, not source code)
+uploads/*
+!uploads/.gitkeep
+
+# Dataset (too large - download separately)
+flickr8k/
+train/Images/
+train/captions.txt
+
+# Environment variables
+.env
+.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Database file (auto-created at runtime)
+*.db
+*.sqlite
+*.sqlite3
+
+# Test and scratch files
+generate_project.py
+generate_dl_scripts.py
+download_dataset.py

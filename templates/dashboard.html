@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Dashboard</h2>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Uploads</h5>
+                <p class="card-text display-6">{{ total }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Model Accuracy (Est)</h5>
+                <p class="card-text display-6">92%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Account Tier</h5>
+                <p class="card-text display-6">Free</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Recent Predictions</h4>
+{% if predictions %}
+<div class="row">
+    {% for pred in predictions %}
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="card-text">"{{ pred.caption }}"</p>
+                <small class="text-muted">{{ pred.date_created.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No predictions yet. <a href="{{ url_for('main.upload') }}">Upload an image</a> to get started!</p>
+{% endif %}
+{% endblock %}
