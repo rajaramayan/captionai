@@ -16,10 +16,10 @@ env/
 ENV/
 .venv/
 
-# Model weights (too large for git - download/train separately)
-models/*.h5
-models/*.pkl
-models/*.json
+# Model weights - included in repo (files are under GitHub's 100MB limit)
+# models/*.h5
+# models/*.pkl
+# models/*.json
 
 # Uploaded images (user data, not source code)
 uploads/*
