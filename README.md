@@ -1,3 +1,12 @@
+---
+title: CaptionAI - Image Captioning
+emoji: 🖼
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # An Extension for Image Captioning Using AI Technique
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)

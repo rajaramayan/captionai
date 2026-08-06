@@ -8,5 +8,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python -c "from tensorflow.keras.applications import InceptionV3; InceptionV3(weights='imagenet', include_top=False)"
 
 COPY . .
-EXPOSE 5000
+EXPOSE 7860
 CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
