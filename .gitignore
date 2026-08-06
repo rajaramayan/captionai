@@ -27,6 +27,8 @@ uploads/*
 
 # Dataset (too large - download separately)
 flickr8k/
+train/Images/
+train/captions.txt
 
 # Environment variables
 .env
