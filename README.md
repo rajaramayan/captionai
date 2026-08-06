@@ -4,6 +4,7 @@ emoji: 🖼
 colorFrom: blue
 colorTo: purple
 sdk: docker
+hardware: cpu-basic
 pinned: false
 ---
 
