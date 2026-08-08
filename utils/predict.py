@@ -99,48 +99,56 @@ def generate_caption(image_path):
         word_counts = {}
         last_word = None
         consecutive = 0
+        confidences = []
+        temperature = 0.7  # lower = more focused, higher = more diverse
         for i in range(MAX_LENGTH):
             sequence = _tokenizer.texts_to_sequences([in_text])[0]
             sequence = pad_sequence(sequence, MAX_LENGTH)
             sequence = np.expand_dims(sequence, axis=0)
-            
-            yhat = _lstm_model.predict([feature, sequence], verbose=0)
-            
-            # Use top-k sampling to avoid greedy repetition loops
-            yhat = yhat[0]
+
+            yhat = _lstm_model.predict([feature, sequence], verbose=0)[0]
+
+            # Apply temperature scaling then softmax
+            yhat = yhat / temperature
+            yhat = np.exp(yhat - np.max(yhat))
+            yhat = yhat / yhat.sum()
+
             top_k = 5
             top_k_idx = np.argsort(yhat)[-top_k:][::-1]
-            # Filter out already-overused words
+            # Pick best candidate not already overused
+            chosen_idx = top_k_idx[0]
+            word = index_to_word(chosen_idx, _tokenizer)
             for idx in top_k_idx:
                 candidate = index_to_word(idx, _tokenizer)
                 if candidate and word_counts.get(candidate, 0) < 2:
-                    yhat_idx = idx
+                    chosen_idx = idx
                     word = candidate
                     break
-            else:
-                yhat_idx = top_k_idx[0]
-                word = index_to_word(yhat_idx, _tokenizer)
-            
+
             if word is None:
                 break
 
-            # Stop if same word repeats consecutively
+            # Stop if same word repeats twice in a row
             if word == last_word:
-                break
-            consecutive = 0
+                consecutive += 1
+                if consecutive >= 2:
+                    break
+            else:
+                consecutive = 0
             last_word = word
             word_counts[word] = word_counts.get(word, 0) + 1
+            confidences.append(float(yhat[chosen_idx]))
 
             in_text += ' ' + word
-            
+
             if word == 'endseq':
                 break
-                
+
         # Clean final caption
         final_caption = in_text.replace('startseq', '').replace('endseq', '').strip()
-        
-        # Calculate dummy confidence for now, can implement proper softmax probability averaging
-        confidence = float(np.max(yhat))
+
+        # Average per-word probability as confidence
+        confidence = float(np.mean(confidences)) if confidences else 0.0
         
         return final_caption, confidence
     except Exception as e:
