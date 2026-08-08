@@ -115,6 +115,7 @@ def generate_caption(image_path):
         consecutive = 0
         confidences = []
         temperature = 0.7  # lower = more focused, higher = more diverse
+        vocab_size = len(_tokenizer.word_index) + 1  # for confidence normalization
         for i in range(MAX_LENGTH):
             sequence = _tokenizer.texts_to_sequences([in_text])[0]
             sequence = pad_sequence(sequence, MAX_LENGTH)
@@ -151,7 +152,13 @@ def generate_caption(image_path):
                 consecutive = 0
             last_word = word
             word_counts[word] = word_counts.get(word, 0) + 1
-            confidences.append(float(yhat[chosen_idx]))
+
+            # Normalize probability: scale relative to uniform baseline (1/vocab_size)
+            # so that random guessing ≈ 0% and high certainty → meaningful %
+            uniform_baseline = 1.0 / vocab_size
+            raw_prob = float(yhat[chosen_idx])
+            normalized = min(raw_prob / (uniform_baseline * 5.0), 1.0)  # saturates at 5x baseline
+            confidences.append(normalized)
 
             in_text += ' ' + word
 
@@ -161,7 +168,7 @@ def generate_caption(image_path):
         # Clean final caption
         final_caption = in_text.replace('startseq', '').replace('endseq', '').strip()
 
-        # Average per-word probability as confidence
+        # Mean normalized confidence across all generated words
         confidence = float(np.mean(confidences)) if confidences else 0.0
         
         return final_caption, confidence
