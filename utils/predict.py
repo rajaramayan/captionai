@@ -113,7 +113,7 @@ def generate_caption(image_path):
             # Filter out already-overused words
             for idx in top_k_idx:
                 candidate = index_to_word(idx, _tokenizer)
-                if candidate and word_counts.get(candidate, 0) < 3:
+                if candidate and word_counts.get(candidate, 0) < 2:
                     yhat_idx = idx
                     word = candidate
                     break
@@ -124,13 +124,10 @@ def generate_caption(image_path):
             if word is None:
                 break
 
-            # Stop if same word repeats consecutively more than twice
+            # Stop if same word repeats consecutively
             if word == last_word:
-                consecutive += 1
-                if consecutive >= 2:
-                    break
-            else:
-                consecutive = 0
+                break
+            consecutive = 0
             last_word = word
             word_counts[word] = word_counts.get(word, 0) + 1
 
