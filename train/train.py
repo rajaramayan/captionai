@@ -27,7 +27,7 @@ def data_generator(descriptions, features, tokenizer, max_length, vocab_size, ba
                     y.extend(out_word)
             
             if n == batch_size:
-                yield [np.array(X1), np.array(X2)], np.array(y)
+                yield (np.array(X1), np.array(X2)), np.array(y)
                 X1, X2, y = list(), list(), list()
                 n = 0
 
@@ -114,12 +114,12 @@ def main():
     # 3. Extract Features (Simplified for memory)
     # Note: In a real run on 8k images, you would extract all to a .pkl file first. 
     # Here we simulate by just training on a tiny subset to ensure the code executes cleanly.
-    print("Extracting CNN features for a small subset of images for demonstration...")
+    print("Extracting CNN features for 7000 images for demonstration...")
     image_dir = os.path.join(dataset_dir, 'Images')
     cnn_model = build_cnn_extractor()
     features = dict()
     
-    subset_keys = list(train_descriptions.keys())[:1000] # TRAIN ON 1000 IMAGES FOR DEMO
+    subset_keys = list(train_descriptions.keys())[:7000] # TRAIN ON 1000 IMAGES FOR DEMO
     train_descriptions = {k: train_descriptions[k] for k in subset_keys}
     
     import glob
@@ -137,12 +137,21 @@ def main():
     
     # 5. Train
     print("Starting training...")
-    epochs = 15
-    batch_size = 8
+    epochs = 28
+    batch_size = 16
     steps = len(train_descriptions) // batch_size
     
-    generator = data_generator(train_descriptions, features, tokenizer, max_length, vocab_size, batch_size)
-    model.fit(generator, epochs=epochs, steps_per_epoch=steps, verbose=1)
+    dataset = tf.data.Dataset.from_generator(
+        lambda: data_generator(train_descriptions, features, tokenizer, max_length, vocab_size, batch_size),
+        output_signature=(
+            (
+                tf.TensorSpec(shape=(None, 2048), dtype=tf.float32),
+                tf.TensorSpec(shape=(None, max_length), dtype=tf.int32),
+            ),
+            tf.TensorSpec(shape=(None, vocab_size), dtype=tf.float32),
+        )
+    )
+    model.fit(dataset, epochs=epochs, steps_per_epoch=steps, verbose=1)
     
     # 6. Save Model
     model_path = os.path.join(models_dir, 'model_lstm.h5')

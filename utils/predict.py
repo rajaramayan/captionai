@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from utils.cnn import build_cnn_extractor, extract_features
 from utils.tokenizer import load_tokenizer
+from utils.lstm import build_lstm_model
 from utils.preprocess import pad_sequence
 import time
 import urllib.request
@@ -65,7 +66,14 @@ def load_models():
         if os.path.exists(lstm_path):
             try:
                 print("Loading LSTM model...")
-                _lstm_model = tf.keras.models.load_model(lstm_path)
+                try:
+                    _lstm_model = tf.keras.models.load_model(lstm_path, compile=False)
+                except Exception:
+                    # Fallback: rebuild architecture and load weights only
+                    # (needed when Keras serializes internal ops like NotEqual from mask_zero)
+                    vocab_size = len(_tokenizer.word_index) + 1
+                    _lstm_model = build_lstm_model(vocab_size, MAX_LENGTH)
+                    _lstm_model.load_weights(lstm_path)
                 print("LSTM loaded.")
             except Exception as e:
                 print("Error loading LSTM model:", e)
