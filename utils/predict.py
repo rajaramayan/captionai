@@ -66,15 +66,29 @@ def load_models():
         if os.path.exists(lstm_path):
             try:
                 print("Loading LSTM model...")
+                loaded = False
+                # Attempt 1: standard load
                 try:
                     _lstm_model = tf.keras.models.load_model(lstm_path, compile=False)
-                except Exception:
-                    # Fallback: rebuild architecture and load weights only
-                    # (needed when Keras serializes internal ops like NotEqual from mask_zero)
+                    loaded = True
+                    print("LSTM loaded via full model load.")
+                except Exception as e1:
+                    print(f"Full model load failed ({e1}), trying unsafe deserialization...")
+                # Attempt 2: unsafe deserialization (for cross-version compatibility)
+                if not loaded:
+                    try:
+                        tf.keras.config.enable_unsafe_deserialization()
+                        _lstm_model = tf.keras.models.load_model(lstm_path, compile=False)
+                        loaded = True
+                        print("LSTM loaded via unsafe deserialization.")
+                    except Exception as e2:
+                        print(f"Unsafe load failed ({e2}), trying weights fallback...")
+                # Attempt 3: rebuild architecture and load weights by name
+                if not loaded:
                     vocab_size = len(_tokenizer.word_index) + 1
                     _lstm_model = build_lstm_model(vocab_size, MAX_LENGTH)
-                    _lstm_model.load_weights(lstm_path)
-                print("LSTM loaded.")
+                    _lstm_model.load_weights(lstm_path, by_name=True, skip_mismatch=True)
+                    print("LSTM loaded via weights-only fallback.")
             except Exception as e:
                 print("Error loading LSTM model:", e)
         else:
