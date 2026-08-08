@@ -96,6 +96,9 @@ def generate_caption(image_path):
         feature = extract_features(image_path, _cnn_model)
         
         in_text = 'startseq'
+        word_counts = {}
+        last_word = None
+        consecutive = 0
         for i in range(MAX_LENGTH):
             sequence = _tokenizer.texts_to_sequences([in_text])[0]
             sequence = pad_sequence(sequence, MAX_LENGTH)
@@ -103,13 +106,34 @@ def generate_caption(image_path):
             
             yhat = _lstm_model.predict([feature, sequence], verbose=0)
             
-            # Get highest probability index
-            yhat_idx = np.argmax(yhat)
-            word = index_to_word(yhat_idx, _tokenizer)
+            # Use top-k sampling to avoid greedy repetition loops
+            yhat = yhat[0]
+            top_k = 5
+            top_k_idx = np.argsort(yhat)[-top_k:][::-1]
+            # Filter out already-overused words
+            for idx in top_k_idx:
+                candidate = index_to_word(idx, _tokenizer)
+                if candidate and word_counts.get(candidate, 0) < 3:
+                    yhat_idx = idx
+                    word = candidate
+                    break
+            else:
+                yhat_idx = top_k_idx[0]
+                word = index_to_word(yhat_idx, _tokenizer)
             
             if word is None:
                 break
-                
+
+            # Stop if same word repeats consecutively more than twice
+            if word == last_word:
+                consecutive += 1
+                if consecutive >= 2:
+                    break
+            else:
+                consecutive = 0
+            last_word = word
+            word_counts[word] = word_counts.get(word, 0) + 1
+
             in_text += ' ' + word
             
             if word == 'endseq':
